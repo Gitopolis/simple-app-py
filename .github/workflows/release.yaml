@@ -1,0 +1,72 @@
+name: Increment the project version
+on:
+  push:
+    branches:
+    - release
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Generate a token
+      id: generate-token
+      uses: actions/create-github-app-token@v2
+      with:
+        app-id: ${{ vars.RELEASER_APP_ID }}
+        private-key: ${{ secrets.RELEASER_PRIVATE_KEY }}
+    - name: Checkout code
+      uses: actions/checkout@v5
+      with:
+        token: ${{ steps.generate-token.outputs.token }}
+        fetch-depth: 0
+    - name: Set up Go
+      uses: actions/setup-go@v6
+      with:
+        go-version: stable
+    - name: Install svu
+      run: go install github.com/caarlos0/svu@latest
+    - name: Calculate release version
+      id: svu
+      run: |
+        set -euo pipefail
+        CURRENT=$(svu current 2>/dev/null || echo "")
+        NEXT=$(svu next)
+
+        if [ -z "${CURRENT}" ]; then
+          CURRENT="v0.1.0"
+        fi
+        if [ "${NEXT}" = "${CURRENT}" ]; then
+          echo "new-tag=false" >> "${GITHUB_OUTPUT}"
+        else
+          echo "new-tag=true" >> "${GITHUB_OUTPUT}"
+        fi
+        echo "new-tag-version=${NEXT}" >> "${GITHUB_OUTPUT}"
+    - name: Print new tag information
+      run: |
+        echo "new-tag=$NEW_TAG"
+        echo "new-tag-version=$NEW_TAG_VERSION"
+      env:
+        NEW_TAG: ${{ steps.svu.outputs['new-tag'] }}
+        NEW_TAG_VERSION: ${{ steps.svu.outputs['new-tag-version'] }}
+    - name: Get the short version
+      if: steps.svu.outputs['new-tag'] == 'true'
+      id: version
+      env:
+        VERSION_TAG: "${{ steps.svu.outputs['new-tag-version'] }}"
+      run: |
+        echo "number=${VERSION_TAG#v}" >> $GITHUB_OUTPUT
+    - name: Update pyproject.toml
+      uses: colathro/toml-editor@1.1.1
+      with:
+        file: src/pyproject.toml
+        key: project.version
+        value: ${{ steps.version.outputs.number }}
+    - name: update uv lock file
+      run: uv lock --no-update
+    - name: Commit and push
+      if: steps.svu.outputs['new-tag'] == 'true'
+      uses: EndBug/add-and-commit@v9
+      with:
+        author_name: "${{ github.actor }}"
+        author_email: "${{ github.actor }}@users.noreply.github.com"
+        message: "chore(release): Bump version to ${{ steps.svu.outputs['new-tag-version'] }}"
+        tag: ${{ steps.svu.outputs['new-tag-version'] }}
