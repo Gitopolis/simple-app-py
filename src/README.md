@@ -1,6 +1,6 @@
 # Simple Flask App
 
-The app returns its own version on the `/verison` endpoint
+The app returns its own version on the `/verison` endpoint and health status on `/healthz` endpoint.
 
 ## Development
 
