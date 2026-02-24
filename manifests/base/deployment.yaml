@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: simple-app-py
+  labels:
+    app: simple-app-py
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: simple-app-py
+  template:
+    metadata:
+      labels:
+        app: simple-app-py
+    spec:
+      containers:
+      - name: simple-app-py
+        image: ghcr.io/gitopolis/simple-app-py:latest
+        command: ['uv', 'run', 'uvicorn', 'main:app', '--host', '0.0.0.0', '--port', '8080']
+        ports:
+        - containerPort: 8080
+          name: http
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
