@@ -65,6 +65,7 @@ jobs:
     - name: Install the latest version of uv
       uses: astral-sh/setup-uv@v7
     - name: update uv lock file
+      working-directory: src
       run: uv lock
     - name: Commit and push
       if: steps.svu.outputs['new-tag'] == 'true'
