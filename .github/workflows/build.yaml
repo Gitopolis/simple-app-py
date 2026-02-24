@@ -5,8 +5,8 @@ on:
     - main
     tags:
     - v*
-    paths-ignore:
-    - README.md
+    paths:
+    - src/**
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: gitopolis/simple-app-py
