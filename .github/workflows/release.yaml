@@ -4,7 +4,8 @@ on:
     branches:
     - release
     paths:
-    - src/**
+    - 'src/**'
+    - '!src/pyproject.toml'
 jobs:
   release:
     runs-on: ubuntu-latest
