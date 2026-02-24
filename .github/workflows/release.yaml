@@ -62,6 +62,8 @@ jobs:
         file: src/pyproject.toml
         key: project.version
         value: ${{ steps.version.outputs.number }}
+    - name: Install the latest version of uv
+      uses: astral-sh/setup-uv@v7
     - name: update uv lock file
       run: uv lock --no-update
     - name: Commit and push
